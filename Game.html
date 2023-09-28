@@ -1,0 +1,745 @@
+<head>
+	<title>Assignment 7: Link Comes to JavaScript</title>
+	<meta charset="UTF-8">
+</head>
+<body>
+<br>
+<canvas id="myCanvas" width="500" height="500" style="border:1px solid #cccccc;"></canvas>
+
+<script type="text/javascript">
+
+class Sprite
+{
+	constructor(x1, y1, w1, h1, image_url)
+	{
+		this.x = x1;
+		this.y = y1;
+		this.w = w1;
+		this.h = h1;
+		this.image = new Image();
+		this.image.src = image_url;
+	}
+	checkCollision(s)
+	{
+		if(this.x + this.w <= s.x) // this right < sprite left
+			return false;
+		if(this.x >= s.x + s.w) // this left > sprite right
+			return false;
+		if(this.y + this.h <= s.y) // this bottom < sprite topside
+			return false;
+		if(this.y >= s.y + s.h) // this topside > sprite bottom 
+			return false;
+		return true;
+	}
+	update()
+	{
+
+	}
+	draw(g, scrollX, scrollY)
+	{
+		g.drawImage(this.image, this.x - scrollX, this.y - scrollY, this.w, this.h)
+	}
+}
+
+class Tile extends Sprite
+{
+
+	//static tile_image = null;
+	
+	constructor(x, y) 
+	{
+		super(x, y, 50, 50, "tile.png")
+		
+	}
+
+	/*draw(g, scrollx, scrolly) 
+	{
+		//g.drawImage(Tile.tile_image, this.x, this.y);
+	}*/
+	
+	update() //sit_still
+	{
+	
+	}
+	
+}
+
+class Boomerang extends Sprite
+{
+	constructor(x, y, direction)
+	{
+		super(x, y, 40, 40, "boomerang1.png")
+		this.currentImage = 0;
+		this.images = [];
+		this.horizontalVelocity = 0;
+		this.verticalVelocity = 0;
+		this.readyToDie = false;
+		this.boomImages = ["boomerang1.png", "boomerang2.png", 
+		"boomerang3.png", "boomerang4.png"]
+		for(let i = 0; i < this.boomImages.length; i++)
+		{
+			this.images[i] = new Image();
+			this.images[i].src = "boomerang" + [i + 1] + ".png"
+		}
+		if(direction == "Left"){
+			this.horizontalVelocity = -5;
+		}
+		if (direction == "Right")
+		{
+			this.horizontalVelocity = 5;
+		}
+		if (direction == "Up")
+		{
+			this.verticalVelocity = -5;
+		}
+		if (direction == "Down")
+		{
+			this.verticalVelocity = 5;
+		}
+	}
+	avoidTileAndPots(s)
+	{
+		if (this.x + this.w >= s.y)
+			this.horizontalVelocity = 0;
+		if (this.y + this.h >= s.y)
+			this.verticalVelocity = 0;
+		if (this.x <= s.x + s.w)
+			this.horizontalVelocity = 0;
+		if (this.y <= s.y + s.h)
+			this.verticalVelocity = 0;
+		this.readyToDie = true;
+	}
+	update()
+	{
+		//console.log(this.xdir);
+		this.currentImage++;
+		this.x += this.horizontalVelocity;
+		this.y += this.verticalVelocity;
+		if(this.currentImage > 3)
+			this.currentImage = 0;
+		
+	}
+	draw (g, scrollX, scrollY)
+	{
+		g.drawImage(this.images[this.currentImage], this.x - scrollX, this.y - scrollY);
+	}
+}
+
+class Link extends Sprite
+{
+	constructor(x, y)
+	{
+		super(x, y, 60, 70, "link1.png");
+		
+		//this.model = model;
+		this.currentImage = 0;
+		this.prevX = x;
+		this.prevY = y;
+		this.image.src = "link1.png";
+		this.type = "link";
+		this.linkDirec = "Down";
+		
+		this.images = [];
+		this.linkImages = ["link1.png","link2.png","link3.png",
+		"link4.png","link5.png","link6.png","link7.png","link8.png",
+		"link9.png","link10.png","link12.png","link13.png","link14.png",
+		"link15.png","link16.png","link17.png","link18.png","link19.png","link20.png"];
+		for(let i = 0; i < this.linkImages.length; i++)
+		{
+			this.images[i] = new Image();
+			this.images[i].src = "link"+[i + 1]+".png"
+		}
+	}
+	imagesForward()
+	{
+		if (this.currentImage >= 4)
+		{
+			this.currentImage = 0;
+			this.linkDirec = "Down";
+		}
+		else
+		{
+			this.currentImage++;
+		}
+	}
+	imagesBackwards()
+	{
+		if (this.currentImage < 5 || this.currentImage >= 9)
+		{
+			this.currentImage = 5;
+			this.linkDirec = "Up";
+		}
+		else
+		{
+			this.currentImage++;
+		}
+	}
+	imagesLeft()
+	{
+		if (this.currentImage < 10 || this.currentImage >= 14)
+		{
+			this.currentImage = 10;
+			this.linkDirec = "Left";
+		}
+		else
+		{
+			this.currentImage++;
+		}
+	}
+	
+	imagesRight()
+	{
+		if (this.currentImage < 15 || this.currentImage >= 18)
+		{
+			this.currentImage = 15;
+			this.linkDirec = "Right";
+		}
+		else
+		{
+			this.currentImage++;
+		}
+	}
+
+	avoidTile(s)
+	{
+		if (this. x + this.w > s.x && this.prevX + this.w <= s.x)
+			this.x = s.x - this.w;
+		else if(this.x < s.x + s.w && this.prevX >= s.x + s.w)
+			this.x = s.x + s.w;
+		else if(this.prevY > s.y && this.y >= s.y - s.h)
+			this.y = s.y + s.h;
+		else if(this.y + this.h < s.y + s.h && this.prevY <= s.y)
+			this.y = s.y - this.h;
+	}
+	draw(g, scrollx, scrolly) 
+	{
+		//console.log(this.currentImage)
+		g.drawImage(this.images[this.currentImage], this.x - scrollx, this.y - scrolly);
+	}
+	update()
+	{
+		
+	}
+}
+
+class Pot extends Sprite
+{
+	constructor(x, y)
+	{
+		super(x, y, 40, 40, "pot.png");
+		this.x = x;
+		this.y = y;
+		this.image.src = "pot.png"
+		this.broken = false;
+		this.brokenCounter = 0;
+		this.moveLeft = false;
+		this.moveRight = false;
+		this.moveUp = false;
+		this.moveDown = false;
+		this.readToDie = false;
+		this.horizontalVelocity = 0;
+		this.verticalVelocity = 0;
+	}
+	potBroken()
+	{
+		//console.log(this.brokenCounter);
+		
+	}
+	avoidLink(s)
+	{
+		if ((s.currentImage > 15 || s.currentImage <= 19) && !(s.currentImage < 15 || s.currentImage >= 19))        
+		{
+			this.horizontalVelocity = 5;
+			this.verticalVelocity = 0;
+			this.moveRight = true;
+		}
+		if ((s.currentImage > 5 || s.currentImage <= 9) && !(s.currentImage < 5 || s.currentImage >= 9))       
+		{
+            this.verticalVelocity = -5;
+			this.moveUp = true;
+        }
+        if ((s.currentImage > 10 || s.currentImage <= 14) && !(s.currentImage < 10 || s.currentImage >= 14))
+        {
+			this.horizontalVelocity = -5;
+			this.verticalVelocity = 0;
+            this.moveLeft = true;
+        }
+        if ((s.currentImage <= 4) && !(s.currentImage > 5))
+        {
+            this.verticalVelocity = 5;
+			this.moveDown = true;
+        }
+	}
+	avoidTile(s)
+	{
+		if (this.x + this.w >= s.y)
+			this.moveRight = false;
+		if (this.y + this.h >= s.y)
+			this.moveDown = false;
+		if (this.x <= s.x + s.w)
+			this.moveLeft = false;
+		if (this.y <= s.y + s.h)
+			this.moveUp = false;
+		this.broken = true;
+	}
+	update() //sit_still
+	{
+		if(this.broken)
+		{
+			this.brokenCounter++;
+			this.image.src = "pot_broken.png";
+		}
+		if (this.moveRight)
+		{
+			this.x += this.horizontalVelocity;
+		}
+		if(this.moveLeft)
+			this.x += this.horizontalVelocity;
+		if (this.moveUp)
+			this.y += this.verticalVelocity;
+		if (this.moveDown)
+			this.y += this.verticalVelocity
+		if (this.brokenCounter > 10)
+			this.readToDie = true;
+		
+	}
+	
+}
+
+class Model
+{
+	constructor()
+	{
+		this.sprites = [];
+		this.link = new Link(300,150);
+		this.sprites.push(this.link);
+		this.sprites.push(new Pot(50,50));
+		this.sprites.push(new Pot(250,50));
+		this.sprites.push(new Pot(400,50));
+		this.sprites.push(new Pot(400,150));
+		this.sprites.push(new Pot(400,400));
+		this.sprites.push(new Pot(50,400));
+		this.sprites.push(new Pot(550,400));
+		this.sprites.push(new Pot(550,450));
+		this.sprites.push(new Pot(900,400));
+		this.sprites.push(new Pot(550,200));
+		this.sprites.push(new Pot(550,650));
+		this.sprites.push(new Pot(600,650));
+		this.sprites.push(new Pot(600,250));
+		this.sprites.push(new Pot(750,650));
+		this.sprites.push(new Pot(700,650));
+		this.sprites.push(new Pot(800,550));
+		this.sprites.push(new Pot(400,900));
+		this.sprites.push(new Pot(350,900));
+		this.sprites.push(new Pot(50,900));
+		this.sprites.push(new Pot(100,900));
+		this.sprites.push(new Pot(50,550));
+		this.sprites.push(new Pot(100,550));
+		this.sprites.push(new Tile(0,0));
+		this.sprites.push(new Tile(0,50));
+		this.sprites.push(new Tile(0,100));
+		this.sprites.push(new Tile(0,150));
+		this.sprites.push(new Tile(0,200));
+		this.sprites.push(new Tile(0,250));
+		this.sprites.push(new Tile(0,300));
+		this.sprites.push(new Tile(0,350));
+		this.sprites.push(new Tile(0,400));
+		this.sprites.push(new Tile(0,450));
+		this.sprites.push(new Tile(0,500));
+		this.sprites.push(new Tile(50,0));
+		this.sprites.push(new Tile(100,0));
+		this.sprites.push(new Tile(150,0));
+		this.sprites.push(new Tile(200,0));
+		this.sprites.push(new Tile(250,0));
+		this.sprites.push(new Tile(300,0));
+		this.sprites.push(new Tile(350,0));
+		this.sprites.push(new Tile(400,0));
+		this.sprites.push(new Tile(450,0));
+		this.sprites.push(new Tile(450,450));
+		this.sprites.push(new Tile(450,50));
+		this.sprites.push(new Tile(450,100));
+		this.sprites.push(new Tile(450,150));
+		this.sprites.push(new Tile(450,200));
+		this.sprites.push(new Tile(450,350));
+		this.sprites.push(new Tile(450,400));
+		this.sprites.push(new Tile(400,450));
+		this.sprites.push(new Tile(50,450));
+		this.sprites.push(new Tile(100,450));
+		this.sprites.push(new Tile(150,450));
+		this.sprites.push(new Tile(300,450));
+		this.sprites.push(new Tile(350,450));
+		this.sprites.push(new Tile(300,300));
+		this.sprites.push(new Tile(250,300));
+		this.sprites.push(new Tile(200,300));
+		this.sprites.push(new Tile(150,150));
+		this.sprites.push(new Tile(150,200));
+		this.sprites.push(new Tile(150,250));
+		this.sprites.push(new Tile(150,300));
+		this.sprites.push(new Tile(500,0));
+		this.sprites.push(new Tile(500,50));
+		this.sprites.push(new Tile(500,100));
+		this.sprites.push(new Tile(500,150));
+		this.sprites.push(new Tile(500,200));
+		this.sprites.push(new Tile(500,350));
+		this.sprites.push(new Tile(500,400));
+		this.sprites.push(new Tile(500,450));
+		this.sprites.push(new Tile(550,0));
+		this.sprites.push(new Tile(600,0));
+		this.sprites.push(new Tile(650,0));
+		this.sprites.push(new Tile(700,0));
+		this.sprites.push(new Tile(750,0));
+		this.sprites.push(new Tile(800,0));
+		this.sprites.push(new Tile(850,0));
+		this.sprites.push(new Tile(900,0));
+		this.sprites.push(new Tile(950,0));
+		this.sprites.push(new Tile(950,50));
+		this.sprites.push(new Tile(950,100));
+		this.sprites.push(new Tile(950,150));
+		this.sprites.push(new Tile(950,200));
+		this.sprites.push(new Tile(950,250));
+		this.sprites.push(new Tile(950,300));
+		this.sprites.push(new Tile(950,350));
+		this.sprites.push(new Tile(950,400));
+		this.sprites.push(new Tile(950,450));
+		this.sprites.push(new Tile(900,450));
+		this.sprites.push(new Tile(850,450));
+		this.sprites.push(new Tile(800,450));
+		this.sprites.push(new Tile(650,450));
+		this.sprites.push(new Tile(600,450));
+		this.sprites.push(new Tile(550,450));
+		this.sprites.push(new Tile(0,500));
+		this.sprites.push(new Tile(50,500));
+		this.sprites.push(new Tile(100,500));
+		this.sprites.push(new Tile(150,500));
+		this.sprites.push(new Tile(300,500));
+		this.sprites.push(new Tile(350,500));
+		this.sprites.push(new Tile(400,500));
+		this.sprites.push(new Tile(450,500));
+		this.sprites.push(new Tile(0,550));
+		this.sprites.push(new Tile(0,600));
+		this.sprites.push(new Tile(0,650));
+		this.sprites.push(new Tile(0,700));
+		this.sprites.push(new Tile(0,750));
+		this.sprites.push(new Tile(0,800));
+		this.sprites.push(new Tile(0,850));
+		this.sprites.push(new Tile(0,900));
+		this.sprites.push(new Tile(0,950));
+		this.sprites.push(new Tile(50,950));
+		this.sprites.push(new Tile(100,950));
+		this.sprites.push(new Tile(150,950));
+		this.sprites.push(new Tile(200,950));
+		this.sprites.push(new Tile(250,950));
+		this.sprites.push(new Tile(300,950));
+		this.sprites.push(new Tile(350,950));
+		this.sprites.push(new Tile(400,950));
+		this.sprites.push(new Tile(450,550));
+		this.sprites.push(new Tile(450,600));
+		this.sprites.push(new Tile(450,650));
+		this.sprites.push(new Tile(450,800));
+		this.sprites.push(new Tile(450,850));
+		this.sprites.push(new Tile(450,900));
+		this.sprites.push(new Tile(450,950));
+		this.sprites.push(new Tile(500,950));
+		this.sprites.push(new Tile(550,950));
+		this.sprites.push(new Tile(600,950));
+		this.sprites.push(new Tile(650,950));
+		this.sprites.push(new Tile(700,950));
+		this.sprites.push(new Tile(750,950));
+		this.sprites.push(new Tile(800,950));
+		this.sprites.push(new Tile(850,950));
+		this.sprites.push(new Tile(900,950));
+		this.sprites.push(new Tile(950,950));
+		this.sprites.push(new Tile(300,650));
+		this.sprites.push(new Tile(250,650));
+		this.sprites.push(new Tile(200,650));
+		this.sprites.push(new Tile(150,650));
+		this.sprites.push(new Tile(200,700));
+		this.sprites.push(new Tile(250,700));
+		this.sprites.push(new Tile(200,750));
+		this.sprites.push(new Tile(250,750));
+		this.sprites.push(new Tile(200,800));
+		this.sprites.push(new Tile(250,800));
+		this.sprites.push(new Tile(200,850));
+		this.sprites.push(new Tile(250,850));
+		this.sprites.push(new Tile(150,850));
+		this.sprites.push(new Tile(300,850));
+		this.sprites.push(new Tile(950,900));
+		this.sprites.push(new Tile(950,850));
+		this.sprites.push(new Tile(950,800));
+		this.sprites.push(new Tile(950,750));
+		this.sprites.push(new Tile(950,700));
+		this.sprites.push(new Tile(950,650));
+		this.sprites.push(new Tile(950,600));
+		this.sprites.push(new Tile(950,550));
+		this.sprites.push(new Tile(950,500));
+		this.sprites.push(new Tile(900,500));
+		this.sprites.push(new Tile(850,500));
+		this.sprites.push(new Tile(800,500));
+		this.sprites.push(new Tile(650,500));
+		this.sprites.push(new Tile(600,500));
+		this.sprites.push(new Tile(550,500));
+		this.sprites.push(new Tile(500,500));
+		this.sprites.push(new Tile(500,500));
+		this.sprites.push(new Tile(500,550));
+		this.sprites.push(new Tile(500,600));
+		this.sprites.push(new Tile(500,650));
+		this.sprites.push(new Tile(500,800));
+		this.sprites.push(new Tile(500,850));
+		this.sprites.push(new Tile(500,900));
+		this.sprites.push(new Tile(500,950));
+		this.sprites.push(new Tile(650,700));
+		this.sprites.push(new Tile(650,750));
+		this.sprites.push(new Tile(650,800));
+		this.sprites.push(new Tile(650,850));
+		this.sprites.push(new Tile(650,650));
+		this.sprites.push(new Tile(700,700));
+		this.sprites.push(new Tile(700,750));
+		this.sprites.push(new Tile(750,800));
+		this.sprites.push(new Tile(800,850));
+		this.sprites.push(new Tile(800,800));
+		this.sprites.push(new Tile(800,750));
+		this.sprites.push(new Tile(800,700));
+		this.sprites.push(new Tile(800,650));
+		this.sprites.push(new Tile(650,150));
+		this.sprites.push(new Tile(650,200));
+		this.sprites.push(new Tile(650,250));
+		this.sprites.push(new Tile(650,300));
+		this.sprites.push(new Tile(700,200));
+		this.sprites.push(new Tile(700,250));
+		this.sprites.push(new Tile(750,150));
+		this.sprites.push(new Tile(750,300));
+		this.sprites.push(new Tile(800,100));
+		this.sprites.push(new Tile(800,350));
+		
+	}
+
+	update()
+	{
+		for(let i = 0; i < this.sprites.length; i++)
+		{
+			this.sprites[i].update();
+			if (this.sprites[i] instanceof Tile)
+			{
+				if(this.link.checkCollision(this.sprites[i]))
+				{
+					this.link.avoidTile(this.sprites[i])
+				}
+			}
+			if (this.sprites[i] instanceof Pot)
+			{
+				if(this.link.checkCollision(this.sprites[i]))
+				{
+					this.sprites[i].avoidLink(this.link);
+				}
+				for(let j = 0; j < this.sprites.length; j++)
+				{
+					if (this.sprites[j] instanceof Tile)
+					{
+						if(this.sprites[i].checkCollision(this.sprites[j]))
+						{
+							this.sprites[i].avoidTile(this.sprites[j]);
+						}
+					}
+				}
+				if (this.sprites[i].readToDie)
+					this.sprites.splice(i, 1);
+			}
+			if (this.sprites[i] instanceof Boomerang)
+			{
+				for(let j = 0; j < this.sprites.length; j++)
+				{
+					if (this.sprites[j] instanceof Tile)
+					{
+						if(this.sprites[i].checkCollision(this.sprites[j]))
+						{
+							this.sprites[i].avoidTileAndPots(this.sprites[j]);
+						}
+					}
+					if (this.sprites[j] instanceof Pot)
+					{
+						if(this.sprites[i].checkCollision(this.sprites[j]))
+						{
+							this.sprites[i].avoidTileAndPots(this.sprites[j]);
+							this.sprites[j].avoidTile(this.sprites[i]);
+						}
+					}
+				}
+				if (this.sprites[i].readyToDie)
+					this.sprites.splice(i, 1);
+			}
+		}
+	}
+
+	
+}
+
+
+
+
+class View
+{
+	
+	
+	constructor(model)
+	{
+		this.model = model;
+		this.canvas = document.getElementById("myCanvas");
+		this.scrollPosx = 0;
+		this.scrollPosy = 0;
+	}
+
+	update()
+	{
+		let ctx = this.canvas.getContext("2d");
+		ctx.clearRect(0, 0, 1000, 1000);
+		ctx.rect(0, 0, 1000, 1000);
+		ctx.fillStyle = "teal";
+		ctx.fill();
+		for(let i = 0; i < this.model.sprites.length; i++)
+		{
+			let sprite = this.model.sprites[i];
+			sprite.draw(ctx, this.scrollPosx,this.scrollPosy);
+		}
+	}
+}
+
+
+
+
+
+
+
+class Controller
+{
+	constructor(model, view)
+	{
+		this.model = model;
+		this.view = view;
+		this.key_right = false;
+		this.key_left = false;
+		this.key_up = false;
+		this.key_down = false;
+		this.screen_up = false;
+		this.screen_down = false;
+		this.screen_left = false;
+		this.screen_right = false;
+		let self = this;
+		view.canvas.addEventListener("click", function(event) { self.onClick(event); });
+		document.addEventListener('keydown', function(event) { self.keyDown(event); }, false);
+		document.addEventListener('keyup', function(event) { self.keyUp(event); }, false);
+	}
+
+	onClick(event)
+	{
+		//this.model.onclick(event.pageX - this.view.canvas.offsetLeft, event.pageY - this.view.canvas.offsetTop);
+		//this.model.sprites.push(new Tile(event.pageX - this.view.canvas.offsetLeft, event.pageY - this.view.canvas.offsetTop, 50, 50, "tile.png"));
+	}
+
+	keyDown(event)
+	{
+		if(event.keyCode == 39) this.key_right = true;
+		else if(event.keyCode == 37) this.key_left = true;
+		else if(event.keyCode == 38) this.key_up = true;
+		else if(event.keyCode == 40) this.key_down = true;
+		else if(event.keyCode == 88) this.screen_down = true;
+		else if(event.keyCode == 87) this.screen_up = true;
+		else if(event.keyCode == 68) this.screen_right = true;
+		else if(event.keyCode == 65) this.screen_left = true;
+	}
+
+	keyUp(event)
+	{
+		if(event.keyCode == 39) this.key_right = false;
+		else if(event.keyCode == 37) this.key_left = false;
+		else if(event.keyCode == 38) this.key_up = false;
+		else if(event.keyCode == 40) this.key_down = false;
+		else if(event.keyCode == 88) this.screen_down = false;
+		else if(event.keyCode == 87) this.screen_up = false;
+		else if(event.keyCode == 68) this.screen_right = false;
+		else if(event.keyCode == 65) this.screen_left = false;
+		else if(event.keyCode == 17) 
+		this.model.sprites.push(new Boomerang(this.model.link.x + 30, this.model.link.y + 40, this.model.link.linkDirec));
+	
+	}
+
+	update()
+	{
+		//console.log(this.model.link.linkDirec);
+		this.model.link.prevX = this.model.link.x;
+		this.model.link.prevY = this.model.link.y;
+		if(this.key_right){
+			this.model.link.x += 4;
+            this.model.link.imagesRight();
+            if (this.model.link.x + this.model.link.w > 500 && this.model.link.x + this.model.link.w <= 505 && this.view.scrollPosx < 10)
+                this.view.scrollPosx += 500;
+		}
+		if(this.key_left){
+			this.model.link.x -= 4;
+            this.model.link.imagesLeft();
+            if (this.model.link.x + this.model.link.w > 500 && this.model.link.x + this.model.link.w <= 505 && this.view.scrollPosx > 100)
+                this.view.scrollPosx -= 500;
+		}
+		if(this.key_down){
+			this.model.link.y += 4;
+            this.model.link.imagesForward();
+            if (this.model.link.y + this.model.link.h > 500 && this.model.link.y + this.model.link.h <= 505 && this.view.scrollPosy < 100)
+                this.view.scrollPosy += 500;
+		}
+		if(this.key_up){
+			this.model.link.y -= 4;
+            this.model.link.imagesBackwards();
+            if (this.model.link.y + this.model.link.h > 500 && this.model.link.y + this.model.link.h <= 505 && this.view.scrollPosy > 100)
+                this.view.scrollPosy -= 500;
+		}
+		if(this.screen_down){
+		if (this.view.scrollPosy == 0)
+			this.view.scrollPosy -=  500;
+		else console.log("There is a border here.")
+		}
+		if(this.screen_up) 
+		{
+			if (!this.view.scrollPosy == 0)
+				this.view.scrollPosy +=  500;
+			else console.log("There is a border here.");
+		}
+		if(this.screen_right)
+		{
+			if (this.view.scrollPosx == 0)
+				this.view.scrollPosx -=  500;
+			else console.log("There is a border here.");
+		}
+		if(this.screen_left) 
+		{
+			if (!this.view.scrollPosx == 0)
+				this.view.scrollPosx +=  500;
+			else console.log("There is a border here.")
+		}
+		if(this.onclick)
+		{
+		}
+	}
+}
+
+class Game
+{
+	constructor()
+	{
+		this.model = new Model();
+		this.view = new View(this.model);
+		this.controller = new Controller(this.model, this.view);
+	}
+
+	onTimer()
+	{
+		this.controller.update();
+		this.model.update();
+		this.view.update();
+	}
+}
+
+let game = new Game();
+let timer = setInterval(function() { game.onTimer(); }, 40);
+
+</script>
+
+</body>
